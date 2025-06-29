@@ -6,12 +6,17 @@ local ST_2_ID = 79089892790758
 local ST_3_ID = 105612566642310
 local ST_4_ID = 86082995079744
 local ST_5_ID = 93924136437619
+local ST_6_ID = 120759571391756
+local TP_2_ID = 83312952548612
+local TP_4_ID = 88049480741001
+local TB_1_ID = 105692451124462
+local TLT_1_ID = 128635262479351
 
 -- 2) tweak this delay if you want more/less time between teleports
 local tpwait = 0
 
 -- 3) map each ST_ID to its list of Vector3 waypoints
-local slapTowerPositions = {
+local TowerPositions = {
     [ST_1_ID] = {
         Vector3.new(-22.8364353, -10.6966152, 106.734909),
         Vector3.new(-186.090652, 769.303284,  68.3620224),
@@ -40,11 +45,28 @@ local slapTowerPositions = {
         Vector3.new(-59.9814148,  -10.6966152,  49.6715355),
         Vector3.new(-27.8093853,  339.253418,  -173.782761),
     },
-}
+    [ST_6_ID] = {
+        Vector3.new(64.42, -9.43, 111.52),
+        Vector3.new(-142.28, 593.05, 76.05),
+    },
+    [TP_2_ID] = {
+        Vector3.new(272.64, 347.15, -32.93),
+    },
+    [TP_4_ID] = {
+        Vector3.new(353.89, 338.42, 56.05),
+    },
+    [TB_1_ID] = {
+        Vector3.new(567.81, 465.26, -161.32),
+    },
+    [TLT_1_ID] = {
+        Vector3.new(-31.90, 390.51, -213.14),
+        Vector3.new(-71.36, -7.65, 55.77),
+    },
+} 
 
 -- 4) check the current place, grab the matching waypoints
 local myPlace = game.PlaceId
-local waypoints = slapTowerPositions[myPlace]
+local waypoints = TowerPositions[myPlace]
 if not waypoints then
     return  -- not one of your ST games, bail out
 end
