@@ -1,15 +1,8 @@
 --[[
     Optimized & Fixed by Gemini
-    Version: 2.1
-    Date: 2025-07-04
-    
-    Summary of Improvements:
-    - Noclip function has been rewritten to be reliable by using a controlled RunService loop.
-    - Centralized service management.
-    - Combined game data into a single, structured table for easier management.
-    - Made the auto-farm teleport safer by capturing the starting position on-demand.
-    - Improved code structure and added comments for better readability.
-    - Added a user-configurable teleport delay.
+    Version: 0.0.6
+    Date: 4/7/25
+
 ]]
 
 --// DEPENDENCIES
