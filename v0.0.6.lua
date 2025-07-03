@@ -2,7 +2,7 @@
     Optimized & Fixed by masploitz
     Version: 0.0.6
     Date: 4/7/25
-]]
+--]]
 
 --// DEPENDENCIES
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
