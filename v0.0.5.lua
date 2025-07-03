@@ -1,16 +1,15 @@
 --[[
-    Optimized by Gemini
-    Version: 2.0
+    Optimized & Fixed by Gemini
+    Version: 2.1
     Date: 2025-07-04
     
     Summary of Improvements:
+    - Noclip function has been rewritten to be reliable by using a controlled RunService loop.
     - Centralized service management.
     - Combined game data into a single, structured table for easier management.
-    - Made the noclip function significantly more efficient by removing the per-frame loop.
     - Made the auto-farm teleport safer by capturing the starting position on-demand.
     - Improved code structure and added comments for better readability.
-    - Fixed a critical bug that would stop the script from loading on unsupported games.
-    - Added a user-configurable teleport delay (tpWait).
+    - Added a user-configurable teleport delay.
 ]]
 
 --// DEPENDENCIES
@@ -70,7 +69,7 @@ local currentGameInfo = GameData[currentPlaceId]
 
 --// FLUENT UI SETUP
 local Window = Fluent:CreateWindow({
-    Title = "TowerHub 0.0.2 (Optimized)",
+    Title = "TowerHub 0.0.2 (Fixed)",
     SubTitle = "by masploitz",
     TabWidth = 160,
     Size = UDim2.fromOffset(580, 460),
@@ -80,9 +79,9 @@ local Window = Fluent:CreateWindow({
 })
 
 local Tabs = {
- Universal = Window:AddTab({ Title = "Universal", Icon = "flash" }),
+    Universal = Window:AddTab({ Title = "Universal", Icon = "flash" }),
     Main = Window:AddTab({ Title = "Main", Icon = "home" }),
-    Settings = Window:AddTab({ Title = "Settings", Icon = "settings" }),
+    Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
 }
 
 local Options = Fluent.Options -- For easy access to UI option values
@@ -111,47 +110,37 @@ local function setHumanoidProperty(property, value)
 end
 
 -- Noclip state and management
-local noclipEnabled = false
-local noclipConnection
-
-local function applyNoclip(character)
-    if not character then return end
-    for _, part in ipairs(character:GetDescendants()) do
-        if part:IsA("BasePart") and part.CanCollide then
-            part.CanCollide = false
-        end
-    end
-end
+local noclipConnection = nil
 
 local function handleNoclip(enabled)
-    noclipEnabled = enabled
-    local character = LocalPlayer.Character
-    
     if enabled then
-        -- Apply noclip to the current character and set up a connection for future characters
-        applyNoclip(character)
+        -- If the connection doesn't exist, create it.
         if not noclipConnection then
-            noclipConnection = LocalPlayer.CharacterAdded:Connect(function(newCharacter)
-                -- Use task.wait() to ensure all parts are loaded before applying
-                task.wait() 
-                if noclipEnabled then
-                    applyNoclip(newCharacter)
+            noclipConnection = RunService.Stepped:Connect(function()
+                local character = LocalPlayer.Character
+                if character then
+                    for _, part in ipairs(character:GetDescendants()) do
+                        if part:IsA("BasePart") and part.CanCollide then
+                            part.CanCollide = false
+                        end
+                    end
                 end
             end)
         end
     else
-        -- Disconnect the listener and warn the user that a respawn is needed to restore collisions
+        -- If the connection exists, disconnect it.
         if noclipConnection then
             noclipConnection:Disconnect()
             noclipConnection = nil
+            Fluent:Notify({
+                Title = "Noclip Disabled",
+                Content = "Please respawn your character to fully restore collisions.",
+                Duration = 5
+            })
         end
-        Fluent:Notify({
-            Title = "Noclip Disabled",
-            Content = "Please respawn your character to restore collisions.",
-            Duration = 5
-        })
     end
 end
+
 
 -- Anti-AFK (no changes needed, this is efficient)
 LocalPlayer.Idled:Connect(function()
@@ -174,10 +163,7 @@ if currentGameInfo then
         Default = 0,
         Min = 0,
         Max = 5,
-        Rounding = 1,
-        Callback = function(value)
-            -- The value is already stored in Options.TeleportDelay.Value
-        end
+        Rounding = 1
     })
 
     Tabs.Main:AddButton({
@@ -253,7 +239,7 @@ Window:SelectTab(1)
 
 Fluent:Notify({
     Title = "Loaded",
-    Content = "TowerHub (Optimized) has been loaded.",
+    Content = "TowerHub (Fixed) has been loaded.",
     Duration = 5
 })
 
