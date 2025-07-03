@@ -1,8 +1,7 @@
 --[[
-    Optimized & Fixed by Gemini
+    Optimized & Fixed by masploitz
     Version: 0.0.6
     Date: 4/7/25
-
 ]]
 
 --// DEPENDENCIES
