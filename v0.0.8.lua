@@ -61,7 +61,7 @@ local currentGameInfo = GameData[currentPlaceId]
 
 --// FLUENT UI SETUP
 local Window = Fluent:CreateWindow({
-    Title = "TowerHub 0.0.6 (Fixed)",
+    Title = "TowerHub 0.0.8",
     SubTitle = "by masploitz",
     TabWidth = 160,
     Size = UDim2.fromOffset(580, 460),
@@ -203,7 +203,7 @@ if currentGameInfo then
             if not state then
                 for i = #matchedParts, 1, -1 do
                     local part = matchedParts[i]
-                    if part and part:IsDescendantOf(workspace) and part.Transparency == 0 then
+                    if part and part:IsDescendantOf(workspace) and part.Transparency == 1 then
                         part.CanCollide = false
                     end
                 end
