@@ -158,9 +158,10 @@ ToggleGui.Parent = game.Players.LocalPlayer.PlayerGui
 
 ToggleButton.Name = "TowerHubToggle"
 ToggleButton.Size = UDim2.new(0, 80, 0, 80) -- Made bigger
-ToggleButton.Position = UDim2.new(0.5, -40, 0, 60) -- Adjusted for bigger size
+ToggleButton.Position = UDim2.new(0.5, 0, 0, 100) -- Adjusted for bigger size
 ToggleButton.AnchorPoint = Vector2.new(0.5, 0)
 ToggleButton.BackgroundTransparency = 1
+ToggleButton.Draggable = True
 ToggleButton.BorderSizePixel = 0
 ToggleButton.Image = "rbxassetid://123965155410559"
 ToggleButton.ScaleType = Enum.ScaleType.Fit
