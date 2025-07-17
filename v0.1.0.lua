@@ -154,7 +154,7 @@ ToggleGui.Name = "THGui"
 ToggleGui.ResetOnSpawn = false
 ToggleGui.IgnoreGuiInset = true
 ToggleGui.DisplayOrder = 999999999 -- Ensure it's above all other GUIs
-ToggleGui.Parent = game.CoreGui
+ToggleGui.Parent = game.Players.LocalPlayer.PlayerGui
 
 ToggleButton.Name = "TowerHubToggle"
 ToggleButton.Size = UDim2.new(0, 80, 0, 80) -- Made bigger
