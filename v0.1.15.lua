@@ -1,6 +1,6 @@
 --[[
     Optimized & Fixed by masploitz
-    Version: 0.1.16
+    Version: 0.1.20
     Date: 7/18/25
     Changes:
     - Fixed key verification UI cleanup
@@ -163,7 +163,7 @@ end
 --// UI CREATION FUNCTIONS
 local function createWindow()
     Window = Fluent:CreateWindow({
-        Title = "Masploitz Hub 0.1.16",
+        Title = "Masploitz Hub 0.1.20",
         SubTitle = "by masploitz",
         TabWidth = 160,
         Size = UDim2.fromOffset(580, 460),
@@ -526,7 +526,7 @@ local function updateKeyTabToVerified()
     
     -- Add verification success paragraph
     Tabs.Key:AddParagraph({
-        Title = "✅ Verified",
+        Title = "Verified, RELOAD THE SCRIPT!⚠️",
         Content = "Your key has been verified successfully! You now have access to all features."
     })
 end
