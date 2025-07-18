@@ -1,16 +1,13 @@
 --[[
     Optimized & Fixed by masploitz
-    Version: 0.1.15
-    Date: 7/17/25
+    Version: 0.1.16
+    Date: 7/18/25
     Changes:
-    - Fixed notifications firing on script load for disabled features
-    - Optimized part scanning and memory usage
-    - Improved error handling and performance
-    - Better code organization and cleanup
-    - Reduced redundant operations
-    - Added responsive UI toggle button with aspect ratio constraint
-    - Removed toggle UI visibility button from Fluent library
-    - Made button bigger and positioned above all GUIs
+    - Fixed key verification UI cleanup
+    - Optimized tab creation with reusable functions
+    - Better UI state management
+    - Improved code organization
+    - Fixed tab switching after verification
 ]]
 
 --// DEPENDENCIES
@@ -23,9 +20,18 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local VirtualUser = game:GetService("VirtualUser")
+local TweenService = game:GetService("TweenService")
 
 --// LOCAL PLAYER
 local LocalPlayer = Players.LocalPlayer
+
+--// KEY VERIFICATION SYSTEM
+local KeyData = {
+    CorrectKey = "masploitzHub",
+    VerificationDuration = 14 * 24 * 60 * 60, -- 14 days in seconds
+    GetKeyLink = "test",
+    SaveFileName = "MasploitzHub_" .. LocalPlayer.UserId .. "_KeyVerification.json"
+}
 
 --// SCRIPT CONFIG & DATA
 local GameData = {
@@ -69,28 +75,24 @@ local GameData = {
 local currentPlaceId = game.PlaceId
 local currentGameInfo = GameData[currentPlaceId]
 
---// FLUENT UI SETUP
-local Window = Fluent:CreateWindow({
-    Title = "TowerHub 0.1.15",
-    SubTitle = "by masploitz",
-    TabWidth = 160,
-    Size = UDim2.fromOffset(580, 460),
-    Acrylic = true,
-    Theme = "Dark",
-    MinimizeKey = Enum.KeyCode.LeftControl
-})
-
-local Tabs = {
-    Universal = Window:AddTab({ Title = "Universal", Icon = "globe" }),
-    Main = Window:AddTab({ Title = "Main", Icon = "home" }),
-    Troll = Window:AddTab({ Title = "Troll", Icon = "smile" }),
-    Misc = Window:AddTab({ Title = "Misc", Icon = "package" }),
-    Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
+--// GLOBAL VARIABLES
+local Window, Tabs, Options
+local featureStates = {
+    noclip = false,
+    antiTroll = false,
+    infiniteJump = false,
+    uiVisible = true
 }
 
-local Options = Fluent.Options
+local connections = {
+    noclip = nil,
+    antiTroll = nil,
+    infiniteJump = nil
+}
 
---// OPTIMIZED UTILS
+local keyVerificationElements = {}
+
+--// UTILITY FUNCTIONS
 local function getHumanoidAndRoot()
     local character = LocalPlayer.Character
     if character then
@@ -120,22 +122,119 @@ local function showNotification(title, content, duration)
     })
 end
 
---// FEATURE STATES
-local featureStates = {
-    noclip = false,
-    antiTroll = false,
-    infiniteJump = false,
-    uiVisible = true
-}
+--// KEY VERIFICATION FUNCTIONS
+local function isKeyVerified()
+    local success, data = pcall(function()
+        if isfile(KeyData.SaveFileName) then
+            local fileContent = readfile(KeyData.SaveFileName)
+            local decodedData = game:GetService("HttpService"):JSONDecode(fileContent)
+            return decodedData
+        end
+        return nil
+    end)
+    
+    if success and data then
+        local currentTime = os.time()
+        local verificationTime = data.VerificationTime
+        
+        if verificationTime and (currentTime - verificationTime) <= KeyData.VerificationDuration then
+            return true
+        end
+    end
+    
+    return false
+end
 
---// UI TOGGLE FUNCTIONALITY
-local function toggleUI(state)
+local function saveKeyVerification()
+    local success = pcall(function()
+        local dataToSave = {
+            VerificationTime = os.time(),
+            Username = LocalPlayer.Name,
+            UserId = LocalPlayer.UserId
+        }
+        
+        local encodedData = game:GetService("HttpService"):JSONEncode(dataToSave)
+        writefile(KeyData.SaveFileName, encodedData)
+    end)
+    
+    return success
+end
+
+--// UI CREATION FUNCTIONS
+local function createWindow()
+    Window = Fluent:CreateWindow({
+        Title = "Masploitz Hub 0.1.16",
+        SubTitle = "by masploitz",
+        TabWidth = 160,
+        Size = UDim2.fromOffset(580, 460),
+        Acrylic = true,
+        Theme = "Dark",
+        MinimizeKey = Enum.KeyCode.LeftControl
+    })
+    
+    Tabs = {
+        Key = Window:AddTab({ Title = "Key", Icon = "key" })
+    }
+    
+    Options = Fluent.Options
+end
+
+local function createToggleButton()
+    local ToggleGui = Instance.new("ScreenGui")
+    local ToggleButton = Instance.new("ImageButton")
+    local AspectRatioConstraint = Instance.new("UIAspectRatioConstraint")
+
+    ToggleGui.Name = "MHGui"
+    ToggleGui.ResetOnSpawn = false
+    ToggleGui.IgnoreGuiInset = true
+    ToggleGui.DisplayOrder = 999999999
+    ToggleGui.Parent = LocalPlayer.PlayerGui
+
+    ToggleButton.Name = "MasploitzHubToggle"
+    ToggleButton.Size = UDim2.new(0, 80, 0, 80)
+    ToggleButton.Position = UDim2.new(0.5, 0, 0, 100)
+    ToggleButton.AnchorPoint = Vector2.new(0.5, 0)
+    ToggleButton.BackgroundTransparency = 1
+    ToggleButton.Draggable = true
+    ToggleButton.BorderSizePixel = 0
+    ToggleButton.Image = "rbxassetid://123965155410559"
+    ToggleButton.ScaleType = Enum.ScaleType.Fit
+    ToggleButton.Parent = ToggleGui
+
+    AspectRatioConstraint.AspectRatio = 1
+    AspectRatioConstraint.AspectType = Enum.AspectType.FitWithinMaxSize
+    AspectRatioConstraint.DominantAxis = Enum.DominantAxis.Width
+    AspectRatioConstraint.Parent = ToggleButton
+
+    -- Toggle functionality
+    ToggleButton.MouseButton1Click:Connect(function()
+        local currentVisibility = Window and Window.Root and Window.Root.Visible
+        featureStates.uiVisible = not currentVisibility
+        toggleUI(featureStates.uiVisible)
+    end)
+
+    -- Hover effects
+    ToggleButton.MouseEnter:Connect(function()
+        TweenService:Create(ToggleButton, TweenInfo.new(0.2), {
+            Size = UDim2.new(0, 88, 0, 88)
+        }):Play()
+    end)
+
+    ToggleButton.MouseLeave:Connect(function()
+        TweenService:Create(ToggleButton, TweenInfo.new(0.2), {
+            Size = UDim2.new(0, 80, 0, 80)
+        }):Play()
+    end)
+
+    return ToggleGui, ToggleButton
+end
+
+function toggleUI(state)
     featureStates.uiVisible = state
     if Window and Window.Root then
         Window.Root.Visible = state
     end
     
-    -- Update button transparency to reflect current state
     if ToggleButton then
         if state then
             ToggleButton.ImageTransparency = 0
@@ -147,138 +246,45 @@ local function toggleUI(state)
     end
 end
 
---// RESPONSIVE TOGGLE BUTTON CREATION
-local ToggleGui = Instance.new("ScreenGui")
-local ToggleButton = Instance.new("ImageButton")
-local AspectRatioConstraint = Instance.new("UIAspectRatioConstraint")
-
-ToggleGui.Name = "THGui"
-ToggleGui.ResetOnSpawn = false
-ToggleGui.IgnoreGuiInset = true
-ToggleGui.DisplayOrder = 999999999 -- Ensure it's above all other GUIs
-ToggleGui.Parent = game.Players.LocalPlayer.PlayerGui
-
-ToggleButton.Name = "TowerHubToggle"
-ToggleButton.Size = UDim2.new(0, 80, 0, 80) -- Made bigger
-ToggleButton.Position = UDim2.new(0.5, 0, 0, 100) -- Adjusted for bigger size
-ToggleButton.AnchorPoint = Vector2.new(0.5, 0)
-ToggleButton.BackgroundTransparency = 1
-ToggleButton.Draggable = True
-ToggleButton.BorderSizePixel = 0
-ToggleButton.Image = "rbxassetid://123965155410559"
-ToggleButton.ScaleType = Enum.ScaleType.Fit
-ToggleButton.Parent = ToggleGui
-
--- Add aspect ratio constraint for responsiveness
-AspectRatioConstraint.AspectRatio = 1 -- 1:1 ratio (square)
-AspectRatioConstraint.AspectType = Enum.AspectType.FitWithinMaxSize
-AspectRatioConstraint.DominantAxis = Enum.DominantAxis.Width
-AspectRatioConstraint.Parent = ToggleButton
-
--- Toggle button functionality
-ToggleButton.MouseButton1Click:Connect(function()
-    -- Toggle based on current visibility state
-    local currentVisibility = Window and Window.Root and Window.Root.Visible
-    featureStates.uiVisible = not currentVisibility
-    toggleUI(featureStates.uiVisible)
-end)
-
--- Enhanced hover effects for bigger button
-ToggleButton.MouseEnter:Connect(function()
-    game:GetService("TweenService"):Create(ToggleButton, TweenInfo.new(0.2), {
-        Size = UDim2.new(0, 88, 0, 88) -- Slightly bigger on hover
-    }):Play()
-end)
-
-ToggleButton.MouseLeave:Connect(function()
-    game:GetService("TweenService"):Create(ToggleButton, TweenInfo.new(0.2), {
-        Size = UDim2.new(0, 80, 0, 80) -- Back to original bigger size
-    }):Play()
-end)
-
---// NOCLIP SYSTEM
-local noclipConnection = nil
-
-local function handleNoclip(enabled)
-    featureStates.noclip = enabled
-    
-    if enabled then
-        showNotification("Noclip Enabled", "You can now walk through walls.")
-        if not noclipConnection then
-            noclipConnection = RunService.Stepped:Connect(function()
-                local character = LocalPlayer.Character
-                if character then
-                    for _, part in ipairs(character:GetDescendants()) do
-                        if part:IsA("BasePart") and part.CanCollide then
-                            part.CanCollide = false
+--// FEATURE CREATION FUNCTIONS
+local function createNoclipFeature()
+    local function handleNoclip(enabled)
+        featureStates.noclip = enabled
+        
+        if enabled then
+            showNotification("Noclip Enabled", "You can now walk through walls.")
+            if not connections.noclip then
+                connections.noclip = RunService.Stepped:Connect(function()
+                    local character = LocalPlayer.Character
+                    if character then
+                        for _, part in ipairs(character:GetDescendants()) do
+                            if part:IsA("BasePart") and part.CanCollide then
+                                part.CanCollide = false
+                            end
                         end
                     end
-                end
-            end)
-        end
-    else
-        if noclipConnection then
-            noclipConnection:Disconnect()
-            noclipConnection = nil
-            showNotification("Noclip Disabled", "Noclip mode has been disabled.")
+                end)
+            end
+        else
+            if connections.noclip then
+                connections.noclip:Disconnect()
+                connections.noclip = nil
+                showNotification("Noclip Disabled", "Noclip mode has been disabled.")
+            end
         end
     end
+    
+    return handleNoclip
 end
 
---// ANTI-IDLE
-LocalPlayer.Idled:Connect(function()
-    VirtualUser:CaptureController()
-    VirtualUser:ClickButton2(Vector2.new())
-end)
-
---// MAIN TAB SETUP
-if currentGameInfo then
-    Tabs.Main:AddParagraph({
-        Title = "You're in " .. currentGameInfo.Name,
-        Content = "The script is configured for this game. All features in this tab are available."
-    })
-
-    Tabs.Main:AddSlider("TeleportDelay", {
-        Title = "TP Delay (Seconds)",
-        Description = "Delay between each TP's.",
-        Default = 0,
-        Min = 0,
-        Max = 5,
-        Rounding = 1
-    })
-
-    Tabs.Main:AddButton({
-        Title = "Auto Get Slaps/Win",
-        Callback = function()
-            local humanoid, rootPart = getHumanoidAndRoot()
-            if not rootPart then
-                showNotification("Error", "Could not find your character.", 5)
-                return
-            end
-            
-            local originalCFrame = rootPart.CFrame
-            local tpWait = Options.TeleportDelay.Value
-            
-            for i, pos in ipairs(currentGameInfo.Waypoints) do
-                rootPart.CFrame = CFrame.new(pos)
-                showNotification("Teleporting", "Waypoint " .. i .. "/" .. #currentGameInfo.Waypoints, 1)
-                task.wait(tpWait)
-            end
-            
-            rootPart.CFrame = originalCFrame
-            showNotification("Finished", "Teleport sequence complete.", 5)
-        end
-    })
-
-    --// OPTIMIZED ANTI-TROLL SYSTEM
+local function createAntiTrollFeature()
     local targetColors = {
         Color3.fromRGB(237, 234, 234),
         Color3.fromRGB(99, 95, 98)
     }
     local matchedParts = {}
-    local antiTrollConnection = nil
     local lastScanTime = 0
-    local SCAN_INTERVAL = 5 -- Rescan every 5 seconds instead of every frame
+    local SCAN_INTERVAL = 5
 
     local function isTargetColor(color)
         for _, targetColor in ipairs(targetColors) do
@@ -299,7 +305,6 @@ if currentGameInfo then
         matchedParts = newParts
     end
 
-    -- Initial scan
     scanForParts()
 
     local function handleAntiTroll(enabled)
@@ -308,17 +313,15 @@ if currentGameInfo then
         if enabled then
             showNotification("Anti-Troll Enabled", "Keeping trollers from doing their job!")
             
-            if not antiTrollConnection then
-                antiTrollConnection = RunService.Heartbeat:Connect(function()
+            if not connections.antiTroll then
+                connections.antiTroll = RunService.Heartbeat:Connect(function()
                     local currentTime = tick()
                     
-                    -- Periodic rescan
                     if currentTime - lastScanTime >= SCAN_INTERVAL then
                         scanForParts()
                         lastScanTime = currentTime
                     end
                     
-                    -- Force collisions on target parts
                     for i = #matchedParts, 1, -1 do
                         local part = matchedParts[i]
                         if part and part.Parent then
@@ -330,11 +333,10 @@ if currentGameInfo then
                 end)
             end
         else
-            if antiTrollConnection then
-                antiTrollConnection:Disconnect()
-                antiTrollConnection = nil
+            if connections.antiTroll then
+                connections.antiTroll:Disconnect()
+                connections.antiTroll = nil
                 
-                -- Restore original collision states
                 for _, part in ipairs(matchedParts) do
                     if part and part.Parent and part.Transparency == 1 then
                         part.CanCollide = false
@@ -345,16 +347,11 @@ if currentGameInfo then
             end
         end
     end
+    
+    return handleAntiTroll
+end
 
-    Tabs.Main:AddToggle("AntiTroll", {
-        Title = "Anti-Troll",
-        Description = "Keep trollers from doing their job!",
-        Default = false,
-        Callback = handleAntiTroll
-    })
-
-    --// OPTIMIZED INFINITE JUMP SYSTEM
-    local jumpConnection = nil
+local function createInfiniteJumpFeature()
     local humanoidRef = nil
 
     local function updateHumanoidReference()
@@ -370,130 +367,285 @@ if currentGameInfo then
         if enabled then
             showNotification("Fake Wall-Hop Enabled", "Infinite Jump has been enabled.")
             
-            if not jumpConnection then
-                jumpConnection = UserInputService.JumpRequest:Connect(function()
+            if not connections.infiniteJump then
+                connections.infiniteJump = UserInputService.JumpRequest:Connect(function()
                     if featureStates.infiniteJump and humanoidRef then
                         humanoidRef:ChangeState(Enum.HumanoidStateType.Jumping)
                     end
                 end)
             end
         else
-            if jumpConnection then
-                jumpConnection:Disconnect()
-                jumpConnection = nil
+            if connections.infiniteJump then
+                connections.infiniteJump:Disconnect()
+                connections.infiniteJump = nil
                 showNotification("Fake Wall-Hop Disabled", "Infinite Jump has been disabled.")
             end
         end
     end
 
-    -- Initialize humanoid reference
     updateHumanoidReference()
     LocalPlayer.CharacterAdded:Connect(updateHumanoidReference)
+    
+    return handleInfiniteJump
+end
 
-    local fakeWallHopToggle = Tabs.Main:AddToggle("FakeWallHop", {
-        Title = "Fake Wall-Hop",
-        Description = "Lets you jump in air forever. (aka Infinite Jump)",
-        Default = false,
-        Callback = handleInfiniteJump
+--// TAB CREATION FUNCTIONS
+local function createUniversalTab()
+    Tabs.Universal = Window:AddTab({ Title = "Universal", Icon = "globe" })
+    
+    Tabs.Universal:AddInput("WalkSpeedInput", {
+        Title = "WalkSpeed", 
+        Default = "16", 
+        Placeholder = "Enter speed", 
+        Numeric = true
     })
 
-    -- Store reference to toggle for cleanup
-    Options.FakeWallHopToggle = fakeWallHopToggle
+    Tabs.Universal:AddButton({
+        Title = "Set WalkSpeed",
+        Callback = function()
+            setHumanoidProperty("WalkSpeed", Options.WalkSpeedInput.Value)
+            showNotification("WalkSpeed Updated", "Your WalkSpeed has been set to " .. Options.WalkSpeedInput.Value)
+        end
+    })
 
-else
-    Tabs.Main:AddParagraph({
-        Title = "Unsupported Game",
-        Content = "The current game is not supported. You can still use Universal and Settings."
+    Tabs.Universal:AddInput("JumpPowerInput", {
+        Title = "JumpPower", 
+        Default = "50", 
+        Placeholder = "Enter jump height", 
+        Numeric = true
+    })
+
+    Tabs.Universal:AddButton({
+        Title = "Set JumpPower",
+        Callback = function()
+            setHumanoidProperty("JumpPower", Options.JumpPowerInput.Value)
+            showNotification("JumpPower Updated", "Your JumpPower has been set to " .. Options.JumpPowerInput.Value)
+        end
+    })
+
+    Tabs.Universal:AddToggle("NoclipToggle", {
+        Title = "Noclip",
+        Description = "Allows you to walk through walls.",
+        Default = false,
+        Callback = createNoclipFeature()
     })
 end
 
---// UNIVERSAL TAB
-Tabs.Universal:AddInput("WalkSpeedInput", {
-    Title = "WalkSpeed", 
-    Default = "16", 
-    Placeholder = "Enter speed", 
-    Numeric = true
-})
+local function createMainTab()
+    Tabs.Main = Window:AddTab({ Title = "Main", Icon = "home" })
+    
+    if currentGameInfo then
+        Tabs.Main:AddParagraph({
+            Title = "You're in " .. currentGameInfo.Name,
+            Content = "The script is configured for this game. All features in this tab are available."
+        })
 
-Tabs.Universal:AddButton({
-    Title = "Set WalkSpeed",
-    Callback = function()
-        setHumanoidProperty("WalkSpeed", Options.WalkSpeedInput.Value)
-        showNotification("WalkSpeed Updated", "Your WalkSpeed has been set to " .. Options.WalkSpeedInput.Value)
+        Tabs.Main:AddSlider("TeleportDelay", {
+            Title = "TP Delay (Seconds)",
+            Description = "Delay between each TP's.",
+            Default = 0,
+            Min = 0,
+            Max = 5,
+            Rounding = 1
+        })
+
+        Tabs.Main:AddButton({
+            Title = "Auto Get Slaps/Win",
+            Callback = function()
+                local humanoid, rootPart = getHumanoidAndRoot()
+                if not rootPart then
+                    showNotification("Error", "Could not find your character.", 5)
+                    return
+                end
+                
+                local originalCFrame = rootPart.CFrame
+                local tpWait = Options.TeleportDelay.Value
+                
+                for i, pos in ipairs(currentGameInfo.Waypoints) do
+                    rootPart.CFrame = CFrame.new(pos)
+                    showNotification("Teleporting", "Waypoint " .. i .. "/" .. #currentGameInfo.Waypoints, 1)
+                    task.wait(tpWait)
+                end
+                
+                rootPart.CFrame = originalCFrame
+                showNotification("Finished", "Teleport sequence complete.", 5)
+            end
+        })
+
+        Tabs.Main:AddToggle("AntiTroll", {
+            Title = "Anti-Troll",
+            Description = "Keep trollers from doing their job!",
+            Default = false,
+            Callback = createAntiTrollFeature()
+        })
+
+        Tabs.Main:AddToggle("FakeWallHop", {
+            Title = "Fake Wall-Hop",
+            Description = "Lets you jump in air forever. (aka Infinite Jump)",
+            Default = false,
+            Callback = createInfiniteJumpFeature()
+        })
+
+    else
+        Tabs.Main:AddParagraph({
+            Title = "Unsupported Game",
+            Content = "The current game is not supported. You can still use Universal and Settings."
+        })
     end
-})
+end
 
-Tabs.Universal:AddInput("JumpPowerInput", {
-    Title = "JumpPower", 
-    Default = "50", 
-    Placeholder = "Enter jump height", 
-    Numeric = true
-})
+local function createAdditionalTabs()
+    Tabs.Troll = Window:AddTab({ Title = "Troll", Icon = "smile" })
+    Tabs.Misc = Window:AddTab({ Title = "Misc", Icon = "package" })
+    Tabs.Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
+    
+    -- Setup save managers
+    SaveManager:SetLibrary(Fluent)
+    InterfaceManager:SetLibrary(Fluent)
+    SaveManager:IgnoreThemeSettings()
+    SaveManager:SetIgnoreIndexes({})
+    InterfaceManager:SetFolder("MasploitzHub")
+    SaveManager:SetFolder("MasploitzHub/SaveData")
+    InterfaceManager:BuildInterfaceSection(Tabs.Settings)
+    SaveManager:BuildConfigSection(Tabs.Settings)
+end
 
-Tabs.Universal:AddButton({
-    Title = "Set JumpPower",
-    Callback = function()
-        setHumanoidProperty("JumpPower", Options.JumpPowerInput.Value)
-        showNotification("JumpPower Updated", "Your JumpPower has been set to " .. Options.JumpPowerInput.Value)
+--// KEY VERIFICATION UI FUNCTIONS
+local function clearKeyVerificationUI()
+    -- Clear all elements from the key tab
+    for _, element in ipairs(keyVerificationElements) do
+        if element and element.Destroy then
+            element:Destroy()
+        end
     end
-})
+    keyVerificationElements = {}
+end
 
-Tabs.Universal:AddToggle("NoclipToggle", {
-    Title = "Noclip",
-    Description = "Allows you to walk through walls.",
-    Default = false,
-    Callback = handleNoclip
-})
+local function updateKeyTabToVerified()
+    clearKeyVerificationUI()
+    
+    -- Add verification success paragraph
+    Tabs.Key:AddParagraph({
+        Title = "✅ Verified",
+        Content = "Your key has been verified successfully! You now have access to all features."
+    })
+end
 
--- REMOVED: Toggle UI Visibility button as requested
+local function setupKeyVerificationUI()
+    local paragraph = Tabs.Key:AddParagraph({
+        Title = "Key Verification Required",
+        Content = "Please enter your key to access Masploitz Hub. Keys are valid for 14 days and will be saved locally."
+    })
+    table.insert(keyVerificationElements, paragraph)
+    
+    local keyInput = Tabs.Key:AddInput("KeyInput", {
+        Title = "Enter Key",
+        Default = "",
+        Placeholder = "Enter your key here...",
+        Numeric = false,
+        Finished = false
+    })
+    table.insert(keyVerificationElements, keyInput)
+    
+    local checkButton = Tabs.Key:AddButton({
+        Title = "Check Key",
+        Callback = function()
+            local enteredKey = Options.KeyInput.Value
+            
+            if enteredKey == KeyData.CorrectKey then
+                local success = saveKeyVerification()
+                if success then
+                    showNotification("Key Verified", "Access granted! Key saved for 14 days.", 5)
+                else
+                    showNotification("Save Failed", "Key correct but save failed. You'll need to verify again next time.", 7)
+                end
+                
+                -- Update UI and create main features
+                updateKeyTabToVerified()
+                createMainTabs()
+            else
+                showNotification("Invalid Key", "The key you entered is incorrect.", 5)
+            end
+        end
+    })
+    table.insert(keyVerificationElements, checkButton)
+    
+    local getKeyButton = Tabs.Key:AddButton({
+        Title = "Get Key",
+        Callback = function()
+            setclipboard(KeyData.GetKeyLink)
+            showNotification("Link Copied", "Key purchase link copied to clipboard!", 5)
+        end
+    })
+    table.insert(keyVerificationElements, getKeyButton)
+end
 
---// SETTINGS & CLEANUP
-SaveManager:SetLibrary(Fluent)
-InterfaceManager:SetLibrary(Fluent)
-SaveManager:IgnoreThemeSettings()
-SaveManager:SetIgnoreIndexes({})
-InterfaceManager:SetFolder("TowerHub")
-SaveManager:SetFolder("TowerHub/SaveData")
-InterfaceManager:BuildInterfaceSection(Tabs.Settings)
-SaveManager:BuildConfigSection(Tabs.Settings)
+local function createMainTabs()
+    createUniversalTab()
+    createMainTab()
+    createAdditionalTabs()
+    
+    -- Switch to main tab after creation
+    Window:SelectTab(2) -- Universal tab
+end
 
---// CLEANUP ON SCRIPT END
+--// CLEANUP FUNCTIONS
 local function cleanup()
-    if noclipConnection then
-        noclipConnection:Disconnect()
-        noclipConnection = nil
+    for _, connection in pairs(connections) do
+        if connection then
+            connection:Disconnect()
+        end
     end
-    if antiTrollConnection then
-        antiTrollConnection:Disconnect()
-        antiTrollConnection = nil
-    end
-    if jumpConnection then
-        jumpConnection:Disconnect()
-        jumpConnection = nil
-    end
+    connections = {}
+    
     if ToggleGui then
         ToggleGui:Destroy()
-        ToggleGui = nil
     end
 end
 
--- Handle UI destruction/closing
-if Window and Window.Root then
-    Window.Root.AncestryChanged:Connect(function()
-        if not Window.Root.Parent then
-            -- UI was destroyed, cleanup everything
-            cleanup()
-        end
+--// ANTI-IDLE SETUP
+local function setupAntiIdle()
+    LocalPlayer.Idled:Connect(function()
+        VirtualUser:CaptureController()
+        VirtualUser:ClickButton2(Vector2.new())
     end)
 end
 
-game:GetService("Players").PlayerRemoving:Connect(function(player)
+--// INITIALIZATION
+local function initialize()
+    createWindow()
+    ToggleGui, ToggleButton = createToggleButton()
+    setupAntiIdle()
+    
+    -- Handle cleanup on UI destruction
+    if Window and Window.Root then
+        Window.Root.AncestryChanged:Connect(function()
+            if not Window.Root.Parent then
+                cleanup()
+            end
+        end)
+    end
+    
+    -- Setup key verification or main features
+    if isKeyVerified() then
+        updateKeyTabToVerified()
+        createMainTabs()
+        showNotification("Welcome Back", "Key still valid! Loading Masploitz Hub...", 5)
+    else
+        setupKeyVerificationUI()
+        showNotification("Key Required", "Please verify your key to access the hub.", 5)
+    end
+    
+    Window:SelectTab(1)
+    SaveManager:LoadAutoloadConfig()
+end
+
+-- Handle player leaving
+Players.PlayerRemoving:Connect(function(player)
     if player == LocalPlayer then
         cleanup()
     end
 end)
 
---// INITIALIZATION
-Window:SelectTab(1)
-showNotification("TowerHub Loaded", "Script has been loaded successfully!", 5)
-SaveManager:LoadAutoloadConfig()
+-- Start the script
+initialize()
