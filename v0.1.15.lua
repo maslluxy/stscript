@@ -83,7 +83,7 @@ local Window = Fluent:CreateWindow({
 local Tabs = {
     Universal = Window:AddTab({ Title = "Universal", Icon = "globe" }),
     Main = Window:AddTab({ Title = "Main", Icon = "home" }),
-    Troll = Window:AddTab({ Title = "Troll", Icon = "zap" }),
+    Troll = Window:AddTab({ Title = "Troll", Icon = "smile" }),
     Misc = Window:AddTab({ Title = "Misc", Icon = "package" }),
     Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
 }
