@@ -197,7 +197,7 @@ local function createToggleButton()
     ToggleButton.BackgroundTransparency = 1
     ToggleButton.Draggable = true
     ToggleButton.BorderSizePixel = 0
-    ToggleButton.Image = "rbxassetid://123965155410559"
+    ToggleButton.Image = "rbxassetid://85081942412982"
     ToggleButton.ScaleType = Enum.ScaleType.Fit
     ToggleButton.Parent = ToggleGui
 
