@@ -1,4 +1,4 @@
-    --[[
+--[[
     TowerHub - Optimized & Modular Version
     Version: 0.1.05
     Date: 7/19/25
@@ -38,15 +38,15 @@ local CONFIG = {
         ToggleButton = {
             Size = UDim2.new(0, 80, 0, 80),
             Position = UDim2.new(0.5, 0, 0, 100),
-            Image = "rbxassetid://85081942412982",
+            Image = "rbxassetid://123965155410559",
             HoverSize = UDim2.new(0, 88, 0, 88),
             DisplayOrder = 999999999
         },
         
         Notifications = {
-            DefaultDuration = 3,
-            LoadDuration = 5,
-            ErrorDuration = 5
+            DefaultDuration = 2,
+            LoadDuration = 2,
+            ErrorDuration = 2
         }
     },
     
@@ -64,7 +64,7 @@ local CONFIG = {
             DefaultDelay = 0,
             MinDelay = 0,
             MaxDelay = 5,
-            SafetyDelay = 0
+            SafetyDelay = 0.1
         }
     }
 }
@@ -122,44 +122,11 @@ local GAME_DATA = {
     -- Add more games easily here...
 }
 
---// Universal features configuration
-local UNIVERSAL_FEATURES = {
-    WalkSpeed = {
-        Title = "WalkSpeed",
-        Default = "16",
-        Property = "WalkSpeed",
-        Min = 0,
-        Max = 1000,
-        UseJumpPower = false
-    },
-    
-    JumpPower = {
-        Title = "JumpPower",
-        Default = "50",
-        Property = "JumpPower",
-        Min = 0,
-        Max = 1000,
-        UseJumpPower = true
-    },
-}
-
 --// Tab configuration - Easy to add new tabs
 local TAB_CONFIG = {
-    {
-        Name = "Universal",
-        Icon = "globe",
-        Order = 1
-    },
-    {
-        Name = "Main",
-        Icon = "home",
-        Order = 2
-    },
-    {
-        Name = "Settings",
-        Icon = "settings",
-        Order = 3
-    }
+    {Name = "Universal", Icon = "globe", Order = 1},
+    {Name = "Main", Icon = "home", Order = 2},
+    {Name = "Settings", Icon = "settings", Order = 3}
 }
 
 --// ========================================
@@ -198,33 +165,26 @@ function Utils.getCharacterComponents()
     
     local humanoid = character:FindFirstChildOfClass("Humanoid")
     local rootPart = character:FindFirstChild("HumanoidRootPart")
-    local head = character:FindFirstChild("Head")
     
-    return character, humanoid, rootPart, head
-end
-
-function Utils.waitForCharacter()
-    return LocalPlayer.CharacterAdded:Wait()
+    return character, humanoid, rootPart
 end
 
 -- Humanoid property setter with validation
-function Utils.setHumanoidProperty(property, value, useJumpPower)
+function Utils.setHumanoidProperties(walkSpeed, jumpPower)
     local _, humanoid = Utils.getCharacterComponents()
-    local numberValue = tonumber(value)
+    local wsValue, jpValue = tonumber(walkSpeed), tonumber(jumpPower)
     
-    if not humanoid or not numberValue then
-        return false, "Invalid humanoid or value"
+    if not humanoid or not wsValue or not jpValue then
+        return false, "Invalid humanoid or values"
     end
     
-    if numberValue < 0 then
-        return false, "Value cannot be negative"
+    if wsValue < 0 or jpValue < 0 then
+        return false, "Values cannot be negative"
     end
     
-    humanoid[property] = numberValue
-    
-    if useJumpPower then
-        humanoid.UseJumpPower = true
-    end
+    humanoid.WalkSpeed = wsValue
+    humanoid.UseJumpPower = true
+    humanoid.JumpPower = jpValue
     
     return true, "Success"
 end
@@ -243,9 +203,7 @@ end
 -- Safe teleport function
 function Utils.safeTeleport(position, delay)
     local _, _, rootPart = Utils.getCharacterComponents()
-    if not rootPart then
-        return false, "No character found"
-    end
+    if not rootPart then return false, "No character found" end
     
     delay = delay or CONFIG.FEATURES.Teleport.SafetyDelay
     
@@ -253,10 +211,7 @@ function Utils.safeTeleport(position, delay)
         rootPart.CFrame = CFrame.new(position)
     end)
     
-    if delay > 0 then
-        task.wait(delay)
-    end
-    
+    if delay > 0 then task.wait(delay) end
     return true, "Teleported successfully"
 end
 
@@ -266,28 +221,6 @@ function Utils.compareColors(color1, color2, tolerance)
     return math.abs(color1.R - color2.R) < tolerance and
            math.abs(color1.G - color2.G) < tolerance and
            math.abs(color1.B - color2.B) < tolerance
-end
-
--- Batch processing utility
-function Utils.processBatch(items, processor, batchSize, callback)
-    batchSize = batchSize or CONFIG.FEATURES.Scanning.BatchSize
-    local processed = 0
-    
-    for i = 1, #items, batchSize do
-        local batch = {}
-        for j = i, math.min(i + batchSize - 1, #items) do
-            table.insert(batch, items[j])
-        end
-        
-        processor(batch)
-        processed = processed + #batch
-        
-        if callback then
-            callback(processed, #items)
-        end
-        
-        task.wait() -- Yield for performance
-    end
 end
 
 -- Connection management
@@ -310,9 +243,7 @@ local ConnectionManager = {
     
     cleanup = function(self)
         for name, connection in pairs(self.connections) do
-            if connection then
-                connection:Disconnect()
-            end
+            if connection then connection:Disconnect() end
         end
         self.connections = {}
     end
@@ -330,10 +261,7 @@ local FeatureManager = {
     register = function(self, name, feature)
         self.features[name] = feature
         self.states[name] = false
-        
-        if feature.init then
-            feature.init()
-        end
+        if feature.init then feature.init() end
     end,
     
     -- Toggle a feature
@@ -360,12 +288,8 @@ local FeatureManager = {
     -- Cleanup all features
     cleanup = function(self)
         for name, feature in pairs(self.features) do
-            if self.states[name] and feature.disable then
-                feature.disable()
-            end
-            if feature.cleanup then
-                feature.cleanup()
-            end
+            if self.states[name] and feature.disable then feature.disable() end
+            if feature.cleanup then feature.cleanup() end
         end
         self.states = {}
     end
@@ -377,10 +301,6 @@ local FeatureManager = {
 
 -- Noclip Feature
 local NoclipFeature = {
-    init = function()
-        -- No initialization needed
-    end,
-    
     enable = function()
         ConnectionManager:add("noclip", Services.RunService.Stepped:Connect(function()
             local character = Utils.getCharacterComponents()
@@ -431,9 +351,7 @@ local function createAntiTrollFeature(gameData)
     end
     
     return {
-        init = function()
-            scanForParts()
-        end,
+        init = function() scanForParts() end,
         
         enable = function()
             ConnectionManager:add("antiTroll", Services.RunService.Heartbeat:Connect(function()
@@ -469,18 +387,12 @@ local function createAntiTrollFeature(gameData)
             Utils.notify("Anti-Troll Disabled", "Anti-Troll has been disabled.")
         end,
         
-        cleanup = function()
-            matchedParts = {}
-        end
+        cleanup = function() matchedParts = {} end
     }
 end
 
 -- Infinite Jump Feature
 local InfiniteJumpFeature = {
-    init = function()
-        -- No initialization needed
-    end,
-    
     enable = function()
         ConnectionManager:add("infiniteJump", Services.UserInputService.JumpRequest:Connect(function()
             if FeatureManager:getState("infiniteJump") then
@@ -560,21 +472,15 @@ local UIManager = {
         aspectRatio.Parent = toggleButton
         
         -- Button functionality
-        toggleButton.MouseButton1Click:Connect(function()
-            self:toggleVisibility()
-        end)
+        toggleButton.MouseButton1Click:Connect(function() self:toggleVisibility() end)
         
         -- Hover effects
         toggleButton.MouseEnter:Connect(function()
-            Services.TweenService:Create(toggleButton, TweenInfo.new(0.2), {
-                Size = buttonConfig.HoverSize
-            }):Play()
+            Services.TweenService:Create(toggleButton, TweenInfo.new(0.2), {Size = buttonConfig.HoverSize}):Play()
         end)
         
         toggleButton.MouseLeave:Connect(function()
-            Services.TweenService:Create(toggleButton, TweenInfo.new(0.2), {
-                Size = buttonConfig.Size
-            }):Play()
+            Services.TweenService:Create(toggleButton, TweenInfo.new(0.2), {Size = buttonConfig.Size}):Play()
         end)
     end,
     
@@ -594,44 +500,45 @@ local UIManager = {
     
     -- Add universal features to UI
     addUniversalFeatures = function(self)
-        for name, config in pairs(UNIVERSAL_FEATURES) do
-            -- Add input field
-            self.tabs.Universal:AddInput(name .. "Input", {
-                Title = config.Title,
-                Default = config.Default,
-                Placeholder = "Enter " .. config.Title:lower(),
-                Numeric = true
-            })
-            
-            -- Add set button
-            self.tabs.Universal:AddButton({
-                Title = "Set " .. config.Title,
-                Callback = function()
-                    local value = self.options[name .. "Input"].Value
-                    local success, message = Utils.setHumanoidProperty(
-                        config.Property, 
-                        value, 
-                        config.UseJumpPower
-                    )
-                    
-                    if success then
-                        Utils.notify(config.Title .. " Updated", 
-                                   "Your " .. config.Title .. " has been set to " .. value)
-                    else
-                        Utils.notify("Error", message, CONFIG.UI.Notifications.ErrorDuration)
-                    end
+        -- WalkSpeed input
+        self.tabs.Universal:AddInput("WalkSpeedInput", {
+            Title = "WalkSpeed",
+            Default = "16",
+            Placeholder = "Enter walkspeed",
+            Numeric = true
+        })
+        
+        -- JumpPower input
+        self.tabs.Universal:AddInput("JumpPowerInput", {
+            Title = "JumpPower",
+            Default = "50",
+            Placeholder = "Enter jumppower",
+            Numeric = true
+        })
+        
+        -- Set Both button
+        self.tabs.Universal:AddButton({
+            Title = "Set Both",
+            Callback = function()
+                local wsValue = self.options.WalkSpeedInput.Value
+                local jpValue = self.options.JumpPowerInput.Value
+                local success, message = Utils.setHumanoidProperties(wsValue, jpValue)
+                
+                if success then
+                    Utils.notify("Properties Updated", 
+                               "WalkSpeed: " .. wsValue .. " | JumpPower: " .. jpValue)
+                else
+                    Utils.notify("Error", message, CONFIG.UI.Notifications.ErrorDuration)
                 end
-            })
-        end
+            end
+        })
         
         -- Add noclip toggle
         self.tabs.Universal:AddToggle("NoclipToggle", {
             Title = "Noclip",
             Description = "Allows you to walk through walls.",
             Default = false,
-            Callback = function(state)
-                FeatureManager:toggle("noclip", state)
-            end
+            Callback = function(state) FeatureManager:toggle("noclip", state) end
         })
     end,
     
@@ -656,9 +563,7 @@ local UIManager = {
         if gameData.Waypoints then
             self.tabs.Main:AddButton({
                 Title = "Auto Get Slaps/Win",
-                Callback = function()
-                    self:executeAutoWin(gameData.Waypoints)
-                end
+                Callback = function() self:executeAutoWin(gameData.Waypoints) end
             })
         end
         
@@ -668,9 +573,7 @@ local UIManager = {
                 Title = "Anti-Troll",
                 Description = "Keep trollers from doing their job!",
                 Default = false,
-                Callback = function(state)
-                    FeatureManager:toggle("antiTroll", state)
-                end
+                Callback = function(state) FeatureManager:toggle("antiTroll", state) end
             })
         end
         
@@ -680,9 +583,7 @@ local UIManager = {
                 Title = "Fake Wall-Hop",
                 Description = "Lets you jump in air forever. (aka Infinite Jump)",
                 Default = false,
-                Callback = function(state)
-                    FeatureManager:toggle("infiniteJump", state)
-                end
+                Callback = function(state) FeatureManager:toggle("infiniteJump", state) end
             })
         end
     end,
@@ -691,8 +592,7 @@ local UIManager = {
     executeAutoWin = function(self, waypoints)
         local _, _, rootPart = Utils.getCharacterComponents()
         if not rootPart then
-            Utils.notify("Error", "Could not find your character.", 
-                        CONFIG.UI.Notifications.ErrorDuration)
+            Utils.notify("Error", "Could not find your character.", CONFIG.UI.Notifications.ErrorDuration)
             return
         end
         
@@ -702,18 +602,15 @@ local UIManager = {
         for i, pos in ipairs(waypoints) do
             local success, message = Utils.safeTeleport(pos, tpWait)
             if success then
-                Utils.notify("Teleporting", 
-                           "Waypoint " .. i .. "/" .. #waypoints, 1)
+                Utils.notify("Teleporting", "Waypoint " .. i .. "/" .. #waypoints, 1)
             else
-                Utils.notify("Teleport Error", message, 
-                           CONFIG.UI.Notifications.ErrorDuration)
+                Utils.notify("Teleport Error", message, CONFIG.UI.Notifications.ErrorDuration)
                 break
             end
         end
         
         Utils.safeTeleport(originalCFrame.Position)
-        Utils.notify("Finished", "Teleport sequence complete.", 
-                    CONFIG.UI.Notifications.LoadDuration)
+        Utils.notify("Finished", "Teleport sequence complete.", CONFIG.UI.Notifications.LoadDuration)
     end,
     
     -- Add unsupported game message
@@ -738,9 +635,7 @@ local UIManager = {
     
     -- Cleanup UI
     cleanup = function(self)
-        if self.toggleGui then
-            self.toggleGui:Destroy()
-        end
+        if self.toggleGui then self.toggleGui:Destroy() end
     end
 }
 
@@ -758,16 +653,12 @@ local function initializeScript()
     FeatureManager:register("infiniteJump", InfiniteJumpFeature)
     
     -- Register game-specific features
-    if currentGameData then
-        if table.find(currentGameData.Features or {}, "AntiTroll") then
-            FeatureManager:register("antiTroll", createAntiTrollFeature(currentGameData))
-        end
+    if currentGameData and table.find(currentGameData.Features or {}, "AntiTroll") then
+        FeatureManager:register("antiTroll", createAntiTrollFeature(currentGameData))
     end
     
     -- Initialize UI
     UIManager:init()
-    
-    -- Add universal features
     UIManager:addUniversalFeatures()
     
     -- Add game-specific or unsupported features
@@ -791,24 +682,19 @@ local function initializeScript()
     -- Cleanup system
     if CONFIG.FEATURES.AutoCleanup then
         game:GetService("Players").PlayerRemoving:Connect(function(player)
-            if player == LocalPlayer then
-                cleanup()
-            end
+            if player == LocalPlayer then cleanup() end
         end)
         
         if UIManager.window and UIManager.window.Root then
             UIManager.window.Root.AncestryChanged:Connect(function()
-                if not UIManager.window.Root.Parent then
-                    cleanup()
-                end
+                if not UIManager.window.Root.Parent then cleanup() end
             end)
         end
     end
     
     -- Final setup
     UIManager.window:SelectTab(1)
-    Utils.notify("TowerHub Loaded", "Script has been loaded successfully!", 
-                CONFIG.UI.Notifications.LoadDuration)
+    Utils.notify("TowerHub Loaded", "Script has been loaded successfully!", CONFIG.UI.Notifications.LoadDuration)
     SaveManager:LoadAutoloadConfig()
 end
 
