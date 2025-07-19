@@ -743,7 +743,8 @@ local UIManager = {
             })
         end
     end,
-    if table.find(gameData.Features, "AntiKillpart") then
+    
+if table.find(gameData.Features, "AntiKillpart") then
     self.tabs.Main:AddToggle("AntiKillpart", {
         Title = "Anti-Killpart",
         Description = "Removes TouchTransmitters from kill parts to prevent death.",
@@ -752,6 +753,7 @@ local UIManager = {
             FeatureManager:toggle("antiKillpart", state)
         end
     })
+end
 end
     
     executeAutoWin = function(self, waypoints)
