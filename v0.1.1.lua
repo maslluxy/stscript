@@ -820,7 +820,7 @@ local function initializeScript()
             FeatureManager:register("antiTroll", createAntiTrollFeature())
         end
     end
-    
+    FeatureManager:register("antiKillpart", AntiKillpartFeature)
     UIManager:init()
     
     UIManager:addUniversalFeatures()
