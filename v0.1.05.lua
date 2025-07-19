@@ -64,7 +64,7 @@ local CONFIG = {
             DefaultDelay = 0,
             MinDelay = 0,
             MaxDelay = 5,
-            SafetyDelay = 0.1
+            SafetyDelay = 0
         }
     }
 }
@@ -141,15 +141,6 @@ local UNIVERSAL_FEATURES = {
         Max = 1000,
         UseJumpPower = true
     },
-    
-    JumpHeight = {
-        Title = "JumpHeight",
-        Default = "7.2",
-        Property = "JumpHeight",
-        Min = 0,
-        Max = 1000,
-        UseJumpPower = false
-    }
 }
 
 --// Tab configuration - Easy to add new tabs
