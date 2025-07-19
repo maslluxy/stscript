@@ -52,41 +52,80 @@ local CONFIG = {
 }
 
 local GAME_DATA = {
-    [95508886069297] = {
-        Name = "Slap Tower",
-        Category = "Slap",
-        Features = {"AutoWin", "AntiTroll", "InfiniteJump", "AntiKillpart"},
-        Waypoints = {
-            Vector3.new(-22.836, -10.696, 106.735),
-            Vector3.new(-186.091, 769.303, 68.362),
-            Vector3.new(183.885, -10.696, 81.003),
-            Vector3.new(-20.662, -10.696, 19.133)
-        }
-    },
-    
-    [79089892790758] = {
-        Name = "Slap Tower 2",
-        Category = "Slap",
-        Features = {"AutoWin", "AntiTroll", "InfiniteJump", "AntiKillpart"},
-        Waypoints = {
-            Vector3.new(36.821, 4, 4.976),
-            Vector3.new(-339.738, 4, -4.854),
-            Vector3.new(162.139, 4, -27.676),
-            Vector3.new(4.081, 354, 321.704)
-        }
-    },
-    
-    [105612566642310] = {
-        Name = "Slap Tower 3",
-        Category = "Slap",
-        Features = {"AutoWin", "AntiTroll", "InfiniteJump", "AntiKillpart"},
-        Waypoints = {
-            Vector3.new(18.035, 4, 68.766),
-            Vector3.new(16.240, 4, -157.492),
-            Vector3.new(184.256, 4, -2.320),
-            Vector3.new(-226.947, 354, 38.531)
-        }
+ [95508886069297] = { 
+    Name = "Slap Tower", 
+    Features = {"AutoWin", "AntiTroll", "InfiniteJump", "AntiKillpart"},
+    Waypoints = {
+        Vector3.new(-22.836, -10.696, 106.735), Vector3.new(-186.091, 769.303, 68.362),
+        Vector3.new(183.885, -10.696, 81.003), Vector3.new(-20.662, -10.696, 19.133)
     }
+},
+[79089892790758] = { 
+    Name = "Slap Tower 2", 
+    Features = {"AutoWin", "AntiTroll", "InfiniteJump", "AntiKillpart"},
+    Waypoints = {
+        Vector3.new(36.821, 4, 4.976), Vector3.new(-339.738, 4, -4.854),
+        Vector3.new(162.139, 4, -27.676), Vector3.new(4.081, 354, 321.704)
+    }
+},
+[105612566642310] = { 
+    Name = "Slap Tower 3", 
+    Features = {"AutoWin", "AntiTroll", "InfiniteJump", "AntiKillpart"},
+    Waypoints = {
+        Vector3.new(18.035, 4, 68.766), Vector3.new(16.240, 4, -157.492),
+        Vector3.new(184.256, 4, -2.320), Vector3.new(-226.947, 354, 38.531)
+    }
+},
+[86082995079744] = { 
+    Name = "Slap Tower 4", 
+    Features = {"AutoWin", "AntiTroll", "InfiniteJump", "AntiKillpart"},
+    Waypoints = {
+        Vector3.new(51.702, -3.031, 6.154), Vector3.new(-33.109, -18.031, -33.673),
+        Vector3.new(27.168, -3.031, -187.073), Vector3.new(14.734, 597, 172.204)
+    }
+},
+[93924136437619] = { 
+    Name = "Slap Tower 5", 
+    Features = {"AutoWin", "AntiTroll", "InfiniteJump", "AntiKillpart"},
+    Waypoints = {
+        Vector3.new(-59.981, -10.697, 49.672), Vector3.new(-27.809, 339.253, -173.783)
+    }
+},
+[120759571391756] = { 
+    Name = "Slap Tower 6", 
+    Features = {"AutoWin", "AntiTroll", "InfiniteJump", "AntiKillpart"},
+    Waypoints = {
+        Vector3.new(64.42, -9.43, 111.52), Vector3.new(-142.28, 593.05, 76.05)
+    }
+},
+[83312952548612] = { 
+    Name = "Troll Is A Pinning Tower 2", 
+    Features = {"AutoWin", "AntiTroll", "InfiniteJump", "AntiKillpart"},
+    Waypoints = {
+        Vector3.new(272.64, 347.15, -32.93)
+    }
+},
+[88049480741001] = { 
+    Name = "Troll Is A Pinning Tower 4", 
+    Features = {"AutoWin", "AntiTroll", "InfiniteJump", "AntiKillpart"},
+    Waypoints = {
+        Vector3.new(353.89, 338.42, 56.05)
+    }
+},
+[105692451124462] = { 
+    Name = "Troll Bomb Tower", 
+    Features = {"AutoWin", "AntiTroll", "InfiniteJump", "AntiKillpart"},
+    Waypoints = {
+        Vector3.new(567.81, 465.26, -161.32)
+    }
+},
+[128635262479351] = { 
+    Name = "Troll Laser Tower", 
+    Features = {"AutoWin", "AntiTroll", "InfiniteJump", "AntiKillpart"},
+    Waypoints = {
+        Vector3.new(-31.90, 390.51, -213.14), Vector3.new(-71.36, -7.65, 55.77)
+    }
+}
 }
 
 local UNIVERSAL_FEATURES = {
