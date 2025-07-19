@@ -505,6 +505,41 @@ local InfiniteJumpFeature = {
     end
 }
 
+local KillPartDisableFeature = {
+    killParts = {},
+    
+    init = function(self)
+        -- Initialize but don't execute yet
+    end,
+    
+    enable = function(self)
+        -- Your kill part disable code here
+        self.killParts = {}
+        
+        -- Loop through all descendants in workspace
+        for _, obj in ipairs(workspace:GetDescendants()) do
+            if obj:IsA("BasePart") and string.find(obj.Name:lower(), "killpart") then
+                table.insert(self.killParts, obj)
+            end
+        end
+        
+        -- Remove all TouchTransmitter instances from each kill part
+        for _, part in ipairs(self.killParts) do
+            for _, child in ipairs(part:GetChildren()) do
+                if child:IsA("TouchTransmitter") then
+                    child:Destroy()
+                end
+            end
+        end
+        
+        Utils.notify("Kill Parts Disabled", #self.killParts .. " kill parts have been disabled.")
+    end,
+    
+    disable = function(self)
+        Utils.notify("Kill Parts Feature", "Feature disabled (parts remain disabled).")
+    end
+}
+
 local UIManager = {
     window = nil,
     tabs = {},
@@ -669,6 +704,16 @@ local UIManager = {
             })
         end
     end,
+    if table.find(gameData.Features, "AntiKillpart") then
+    self.tabs.Main:AddToggle("AntiKillpart", {
+        Title = "Anti-Killpart",
+        Description = "Removes TouchTransmitters from kill parts to prevent death.",
+        Default = false,
+        Callback = function(state)
+            FeatureManager:toggle("antiKillpart", state)
+        end
+    })
+end
     
     executeAutoWin = function(self, waypoints)
         local _, _, rootPart = Utils.getCharacterComponents()
@@ -728,6 +773,7 @@ local function initializeScript()
     local currentGameData = GAME_DATA[currentPlaceId]
     
     FeatureManager:register("noclip", NoclipFeature)
+    FeatureManager:register("killPartDisable", KillPartDisableFeature)
     FeatureManager:register("infiniteJump", InfiniteJumpFeature)
     
     if currentGameData then
