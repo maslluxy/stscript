@@ -1,14 +1,14 @@
 local CONFIG = {
     SCRIPT = {
         Name = "MasploitzHub",
-        Version = "0.1.05",
+        Version = "0.1.1",
         Author = "masploitz",
         UpdateUrl = "https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"
     },
     
     UI = {
         Window = {
-            Title = "MasploitzHub | 0.1.05",
+            Title = "MasploitzHub | 0.1.1",
             SubTitle = "by masploitz",
             TabWidth = 160,
             Size = UDim2.fromOffset(580, 460),
@@ -204,6 +204,8 @@ function Utils.safeTeleport(position, delay)
     
     if delay > 0 then
         task.wait(delay)
+    elseif delay = 0 then
+        task.wait(0.001)
     end
     
     return true, "Teleported successfully"
