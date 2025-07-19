@@ -55,7 +55,7 @@ local GAME_DATA = {
     [95508886069297] = {
         Name = "Slap Tower",
         Category = "Slap",
-        Features = {"AutoWin", "AntiTroll", "InfiniteJump"},
+        Features = {"AutoWin", "AntiTroll", "InfiniteJump", "AntiKillpart"},
         Waypoints = {
             Vector3.new(-22.836, -10.696, 106.735),
             Vector3.new(-186.091, 769.303, 68.362),
@@ -67,7 +67,7 @@ local GAME_DATA = {
     [79089892790758] = {
         Name = "Slap Tower 2",
         Category = "Slap",
-        Features = {"AutoWin", "AntiTroll", "InfiniteJump"},
+        Features = {"AutoWin", "AntiTroll", "InfiniteJump", "AntiKillpart"},
         Waypoints = {
             Vector3.new(36.821, 4, 4.976),
             Vector3.new(-339.738, 4, -4.854),
@@ -79,7 +79,7 @@ local GAME_DATA = {
     [105612566642310] = {
         Name = "Slap Tower 3",
         Category = "Slap",
-        Features = {"AutoWin", "AntiTroll", "InfiniteJump"},
+        Features = {"AutoWin", "AntiTroll", "InfiniteJump", "AntiKillpart"},
         Waypoints = {
             Vector3.new(18.035, 4, 68.766),
             Vector3.new(16.240, 4, -157.492),
